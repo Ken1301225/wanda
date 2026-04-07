@@ -3,14 +3,28 @@ import os
 import numpy as np
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
-from importlib.metadata import version
+from importlib.metadata import PackageNotFoundError, version
 
-from lib.prune import prune_wanda, prune_magnitude, prune_sparsegpt, prune_ablate, check_sparsity, find_layers
+from lib import prune as prune_llama
+from lib import prune_qwen
 from lib.eval import eval_ppl, eval_zero_shot
 
-print('torch', version('torch'))
-print('transformers', version('transformers'))
-print('accelerate', version('accelerate'))
+def safe_version(package_name):
+    try:
+        return version(package_name)
+    except PackageNotFoundError:
+        return "not installed"
+
+
+def get_pruning_backend(model_name):
+    if "qwen" in model_name.lower():
+        return prune_qwen
+    return prune_llama
+
+
+print('torch', safe_version('torch'))
+print('transformers', safe_version('transformers'))
+print('accelerate', safe_version('accelerate'))
 print('# of gpus: ', torch.cuda.device_count())
 
 def get_llm(model_name, cache_dir="llm_weights"):
@@ -53,6 +67,7 @@ def main():
         prune_n, prune_m = map(int, args.sparsity_type.split(":"))
 
     model_name = args.model.split("/")[-1]
+    pruning_backend = get_pruning_backend(args.model)
     print(f"loading llm model {args.model}")
     model = get_llm(args.model, args.cache_dir)
     model.eval()
@@ -66,17 +81,17 @@ def main():
     if args.sparsity_ratio != 0:
         print("pruning starts")
         if args.prune_method == "wanda":
-            prune_wanda(args, model, tokenizer, device, prune_n=prune_n, prune_m=prune_m)
+            pruning_backend.prune_wanda(args, model, tokenizer, device, prune_n=prune_n, prune_m=prune_m)
         elif args.prune_method == "magnitude":
-            prune_magnitude(args, model, tokenizer, device, prune_n=prune_n, prune_m=prune_m)
+            pruning_backend.prune_magnitude(args, model, tokenizer, device, prune_n=prune_n, prune_m=prune_m)
         elif args.prune_method == "sparsegpt":
-            prune_sparsegpt(args, model, tokenizer, device, prune_n=prune_n, prune_m=prune_m)
+            pruning_backend.prune_sparsegpt(args, model, tokenizer, device, prune_n=prune_n, prune_m=prune_m)
         elif "ablate" in args.prune_method:
-            prune_ablate(args, model, tokenizer, device, prune_n=prune_n, prune_m=prune_m)
+            pruning_backend.prune_ablate(args, model, tokenizer, device, prune_n=prune_n, prune_m=prune_m)
 
     ################################################################
     print("*"*30)
-    sparsity_ratio = check_sparsity(model)
+    sparsity_ratio = pruning_backend.check_sparsity(model)
     print(f"sparsity sanity check {sparsity_ratio:.4f}")
     print("*"*30)
     ################################################################
