@@ -6,6 +6,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from importlib.metadata import PackageNotFoundError, version
 
 from lib import prune as prune_llama
+from lib import prune_dsv2
 from lib import prune_qwen
 from lib.eval import eval_ppl, eval_zero_shot
 
@@ -17,8 +18,11 @@ def safe_version(package_name):
 
 
 def get_pruning_backend(model_name):
-    if "qwen" in model_name.lower():
+    model_name = model_name.lower()
+    if "qwen" in model_name:
         return prune_qwen
+    if "deepseek" in model_name :
+        return prune_dsv2
     return prune_llama
 
 
