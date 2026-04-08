@@ -37,13 +37,46 @@ def get_wikitext2(nsamples, seed, seqlen, tokenizer):
         trainloader.append((inp, tar))
     return trainloader, testenc
 
-# Load and process c4 dataset
-def get_c4(nsamples, seed, seqlen, tokenizer):
-    # Load train and validation datasets
-    traindata = load_dataset('allenai/c4', 'allenai--c4', data_files={'train': 'en/c4-train.00000-of-01024.json.gz'}, split='train')
-    valdata = load_dataset('allenai/c4', 'allenai--c4', data_files={'validation': 'en/c4-validation.00000-of-00008.json.gz'}, split='validation')
+def _find_local_c4_file(filename):
+    hub_cache = os.environ.get("HF_HUB_CACHE", "/data1/ldk/huggingface/hub")
+    pattern = os.path.join(
+        hub_cache,
+        "datasets--allenai--c4",
+        "snapshots",
+        "*",
+        "en",
+        filename,
+    )
+    candidates = sorted(glob.glob(pattern))
+    return candidates[-1] if candidates else None
 
-    # Generate samples from training set
+
+def _load_c4_split_from_local(split, filename):
+    local_file = _find_local_c4_file(filename)
+    if local_file is None:
+        raise ValueError(
+            f"Offline fallback failed: local C4 file not found for split={split}, filename={filename}."
+        )
+    return load_dataset("json", data_files={split: local_file}, split=split)
+# Load and process c4 dataset
+def get_c4(nsamples, seed, seqlen,  tokenizer):
+    train_file = 'en/c4-train.00000-of-01024.json.gz'
+    val_file = 'en/c4-validation.00000-of-00008.json.gz'
+
+    try:
+        traindata = load_dataset(
+            'allenai/c4', data_files={'train': train_file}, split='train'
+        )
+        valdata = load_dataset(
+            'allenai/c4', data_files={'validation': val_file}, split='validation'
+        )
+    except ValueError as exc:
+        if "Couldn't find cache for allenai/c4" not in str(exc):
+            raise
+        print("Falling back to local cached C4 snapshot files...")
+        traindata = _load_c4_split_from_local('train', 'c4-train.00000-of-01024.json.gz')
+        valdata = _load_c4_split_from_local('validation', 'c4-validation.00000-of-00008.json.gz')
+
     random.seed(seed)
     trainloader = []
     for _ in range(nsamples):
@@ -56,15 +89,18 @@ def get_c4(nsamples, seed, seqlen, tokenizer):
         j = i + seqlen
         inp = trainenc.input_ids[:, i:j]
         tar = inp.clone()
-        tar[:, :-1] = -100
-        trainloader.append((inp, tar))
+        tar[:, :-1] = -100  #构造语言模型的tar, 除了最后一个token其他都是-100, 只计算最后一个token的loss
+        trainloader.append((inp, tar)) 
 
-    # Prepare validation dataset
     valenc = tokenizer(' '.join(valdata[:1100]['text']), return_tensors='pt')
     valenc = valenc.input_ids[:, :(256 * seqlen)]
-    valenc = TokenizerWrapper(valenc)
-    return trainloader, valenc
 
+    class TokenizerWrapper:
+        def __init__(self, input_ids):
+            self.input_ids = input_ids
+    valenc = TokenizerWrapper(valenc)
+
+    return trainloader, valenc
 # Function to select the appropriate loader based on dataset name
 def get_loaders(name, nsamples=128, seed=0, seqlen=2048, tokenizer=None):
     if 'wikitext2' in name:

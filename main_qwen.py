@@ -20,6 +20,7 @@ def get_llm(model_name, cache_dir="llm_weights"):
         device_map="auto"
     )
 
+    # model.seqlen = 2048 #设置最大上下文长度,这里固定方便校准
     model.seqlen = model.config.max_position_embeddings 
     return model
 
