@@ -34,13 +34,13 @@ print('# of gpus: ', torch.cuda.device_count())
 def get_llm(model_name, cache_dir="llm_weights"):
     model = AutoModelForCausalLM.from_pretrained(
         model_name, 
-        torch_dtype=torch.float16, 
+        torch_dtype=torch.bfloat16, 
         cache_dir=cache_dir, 
-        low_cpu_mem_usage=True, 
         device_map="auto"
     )
+    model.seqlen = 2048 #设置最大上下文长度,这里固定方便校准
 
-    model.seqlen = model.config.max_position_embeddings 
+
     return model
 
 def main():

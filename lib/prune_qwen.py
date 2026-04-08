@@ -254,7 +254,7 @@ def prune_wanda(args, model, tokenizer, device=torch.device("cuda:0"), prune_n=0
     model.config.use_cache = use_cache
     torch.cuda.empty_cache()
 
-
+@torch.no_grad()
 def prune_sparsegpt(args, model, tokenizer, dev, prune_n=0, prune_m=0):
     print("Starting ...")
     dataloader, _ = get_loaders("c4", nsamples=args.nsamples, seed=args.seed, seqlen=model.seqlen, tokenizer=tokenizer)
@@ -323,6 +323,7 @@ def prune_sparsegpt(args, model, tokenizer, dev, prune_n=0, prune_m=0):
     torch.cuda.empty_cache()
 
 
+@torch.no_grad()
 def prune_ablate(args, model, tokenizer, dev, prune_n=0, prune_m=0):
     print("Starting ...")
     dataloader, _ = get_loaders("c4", nsamples=args.nsamples, seed=args.seed, seqlen=model.seqlen, tokenizer=tokenizer)
