@@ -13,15 +13,29 @@ print('transformers', version('transformers'))
 print('accelerate', version('accelerate'))
 print('# of gpus: ', torch.cuda.device_count())
 
+def disable_deepspeed_probe_for_save():
+    try:
+        import accelerate.utils.other as accel_other
+        accel_other.is_deepspeed_available = lambda: False
+    except Exception:
+        pass
+
+
 def get_llm(model_name, cache_dir="llm_weights"):
+    def skip(*args, **kwargs):
+        pass
+    torch.nn.init.kaiming_uniform_ = skip
+    torch.nn.init.uniform_ = skip
+    torch.nn.init.normal_ = skip
+
     model = AutoModelForCausalLM.from_pretrained(
         model_name, 
         torch_dtype=torch.bfloat16, 
         device_map="auto"
     )
 
-    # model.seqlen = 2048 #设置最大上下文长度,这里固定方便校准
-    model.seqlen = model.config.max_position_embeddings 
+    model.seqlen = 2048 #设置最大上下文长度,这里固定方便校准
+    # model.seqlen = model.config.max_position_embeddings 
     return model
 
 def main():
@@ -58,8 +72,6 @@ def main():
     tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=False)
 
     device = torch.device("cuda:0")
-    if "30b" in args.model or "65b" in args.model: # for 30b and 65b we use device_map to load onto multiple A6000 GPUs, thus the processing here.
-        device = model.hf_device_map["lm_head"]
     print("use device ", device)
 
     if args.sparsity_ratio != 0:
@@ -89,19 +101,8 @@ def main():
         print("method\tactual_sparsity\tppl_test", file=f, flush=True)
         print(f"{args.prune_method}\t{sparsity_ratio:.4f}\t{ppl_test:.4f}", file=f, flush=True)
 
-    if args.eval_zero_shot:
-        accelerate=False
-        if "30b" in args.model or "65b" in args.model or "70b" in args.model:
-            accelerate=True
-
-        task_list = ["boolq", "rte","hellaswag","winogrande", "arc_easy","arc_challenge", "openbookqa"]
-        num_shot = 0
-        results = eval_zero_shot(args.model, model, tokenizer, task_list, num_shot, accelerate)
-        print("********************************")
-        print("zero_shot evaluation results")
-        print(results)
-
     if args.save_model:
+        disable_deepspeed_probe_for_save()
         model.save_pretrained(args.save_model)
         tokenizer.save_pretrained(args.save_model)
 

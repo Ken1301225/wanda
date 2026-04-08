@@ -7,8 +7,8 @@ cuda_device=0
 seed=42
 
 # Set CUDA device visibility
-export CUDA_HOME=/data1/ldk/env/dkllm
-export PATH=$CUDA_HOME/bin:$PATH
+# export CUDA_HOME=/data1/ldk/env/dkllm
+# export PATH=$CUDA_HOME/bin:$PATH
 export CUDA_VISIBLE_DEVICES=$cuda_device
 export HF_DATASETS_CACHE="/data1/ldk/huggingface/datasets"
 export HF_HUB_CACHE="/data1/ldk/huggingface/hub"
@@ -21,6 +21,7 @@ run_python_command () {
     --prune_method $1 \
     --sparsity_ratio $sparsity_ratio \
     --sparsity_type $2 \
+    --seed $seed \
     # --save $3 \
     # --save_model $4 \
 }
