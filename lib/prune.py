@@ -20,7 +20,7 @@ def find_layers(module, layers=[nn.Linear], name=''):
     Returns:
         dict: Dictionary of layers of the given type(s) within the module.
     """
-    if type(module) in layers:
+    if type(module) in layers and '.experts.' in name:
         return {name: module}
     res = {}
     for name1, child in module.named_children():
