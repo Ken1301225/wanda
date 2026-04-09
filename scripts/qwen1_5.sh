@@ -22,14 +22,15 @@ run_python_command () {
     --sparsity_ratio $sparsity_ratio \
     --sparsity_type $2 \
     --seed $seed \
-    # --save $3 \
-    # --save_model $4 \
+    --save $3 \
+    --save_model $4 \
+    --nsamples 256
 }
 
 
 
 echo "Running with wanda pruning method"
-run_python_command "wanda" "unstructured" "/data1/ldk/SPNN/qwen1_5/wanda/output5/" "/data1/ldk/SPNN/qwen1_5/wanda/ckpt5/"
+run_python_command "wanda" "unstructured" "/data1/ldk/SPNN/qwen1_5/wanda/output8/" "/data1/ldk/SPNN/qwen1_5/wanda/ckpt8/"
 # run_python_command "wanda" "unstructured" 
 echo "Finished wanda pruning method"
 

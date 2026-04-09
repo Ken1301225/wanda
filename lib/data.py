@@ -65,8 +65,24 @@ def get_c4(nsamples, seed, seqlen, tokenizer):
     # Load train and validation datasets
     # traindata = load_dataset('allenai/c4', 'allenai--c4', data_files={'train': 'en/c4-train.00000-of-01024.json.gz'}, split='train')
     # valdata = load_dataset('allenai/c4', 'allenai--c4', data_files={'validation': 'en/c4-validation.00000-of-00008.json.gz'}, split='validation')
-    traindata = _load_c4_split_from_local('train', 'c4-train.00000-of-01024.json.gz')
-    valdata = _load_c4_split_from_local('validation', 'c4-validation.00000-of-00008.json.gz')
+    # 一次性将 train 和 validation 喂给 data_files，满足库的完整性检查
+    dataset = load_dataset(
+        "allenai/c4", 
+        name="en", 
+        data_files={
+            "train": "en/c4-train.00000-of-01024.json.gz",
+            "validation": "en/c4-validation.00000-of-00008.json.gz"
+        },
+        verification_mode="no_checks"  # <--- 新增这一行，跳过文件大小和数量校验
+    )
+
+    # 然后从加载好的 dataset 对象中分别取出训练集和验证集
+    traindata = dataset["train"]
+    valdata = dataset["validation"]
+    # traindata = _load_c4_split_from_local('train', 'c4-train.00000-of-01024.json.gz')
+    # valdata = _load_c4_split_from_local('validation', 'c4-validation.00000-of-00008.json.gz')
+    # dataset = load_dataset("allenai/c4", "en", split="train")
+
     # Generate samples from training set
     random.seed(seed)
     trainloader = []
