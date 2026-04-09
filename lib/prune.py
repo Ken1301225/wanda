@@ -67,7 +67,7 @@ def prepare_calibration_input(model, dataloader, device):
     dtype = next(iter(model.parameters())).dtype
     inps = torch.zeros((128, model.seqlen, model.config.hidden_size), dtype=dtype, device=device)
     inps.requires_grad = False
-    cache = {'i': 0, 'attention_mask': None, "position_ids": None}
+    cache = {'i': 0, 'attention_mask': None, "position_ids": None }
 
     class Catcher(nn.Module):
         def __init__(self, module):

@@ -59,8 +59,6 @@ def main():
     tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=False)
 
     device = torch.device("cuda:0")
-    if "30b" in args.model or "65b" in args.model: # for 30b and 65b we use device_map to load onto multiple A6000 GPUs, thus the processing here.
-        device = model.hf_device_map["lm_head"]
     print("use device ", device)
 
     if args.sparsity_ratio != 0:
@@ -90,17 +88,6 @@ def main():
         print("method\tactual_sparsity\tppl_test", file=f, flush=True)
         print(f"{args.prune_method}\t{sparsity_ratio:.4f}\t{ppl_test:.4f}", file=f, flush=True)
 
-    if args.eval_zero_shot:
-        accelerate=False
-        if "30b" in args.model or "65b" in args.model or "70b" in args.model:
-            accelerate=True
-
-        task_list = ["boolq", "rte","hellaswag","winogrande", "arc_easy","arc_challenge", "openbookqa"]
-        num_shot = 0
-        results = eval_zero_shot(args.model, model, tokenizer, task_list, num_shot, accelerate)
-        print("********************************")
-        print("zero_shot evaluation results")
-        print(results)
 
     if args.save_model:
         model.save_pretrained(args.save_model)
