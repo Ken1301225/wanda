@@ -3,7 +3,7 @@
 # Set common variables
 model="/data1/ldk/model/Qwen1.5/models--Qwen--Qwen1.5-MoE-A2.7B/snapshots/1a758c50ecb6350748b9ce0a99d2352fd9fc11c9/"
 sparsity_ratio=0.75
-cuda_device=3
+cuda_device=2
 seed=42
 
 # Set CUDA device visibility
@@ -24,13 +24,15 @@ run_python_command () {
     --seed $seed \
     --save $3 \
     --save_model $4 \
-    --nsamples 256
+    --nsamples 128
 }
 
 
 
 echo "Running with wanda pruning method"
-run_python_command "wanda" "unstructured" "/data1/ldk/SPNN/qwen1_5/wanda/output8/" "/data1/ldk/SPNN/qwen1_5/wanda/ckpt8/"
+# run_python_command "wanda" "unstructured" "/data1/ldk/SPNN/qwen1_5/wanda/output8/" "/data1/ldk/SPNN/qwen1_5/wanda/ckpt8/"
+# run_python_command "sparsegpt" "unstructured" "/data1/ldk/SPNN/qwen1_5/wanda/output9/" "/data1/ldk/SPNN/qwen1_5/wanda/ckpt9/"
+run_python_command "ablate_wanda_seq" "unstructured" "/data1/ldk/SPNN/qwen1_5/wanda/output10/" "/data1/ldk/SPNN/qwen1_5/wanda/ckpt10/"
 # run_python_command "wanda" "unstructured" 
 echo "Finished wanda pruning method"
 

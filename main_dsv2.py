@@ -1,11 +1,12 @@
 import argparse
 import os 
+import sys
 import numpy as np
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from importlib.metadata import version
 
-from lib.prune import prune_wanda, prune_magnitude, prune_sparsegpt, prune_ablate, check_sparsity, find_layers
+from lib.prune_dsv2 import prune_wanda, prune_magnitude, prune_sparsegpt, prune_ablate, check_sparsity, find_layers
 from lib.eval import eval_ppl, eval_zero_shot
 
 print('torch', version('torch'))
@@ -17,8 +18,7 @@ def get_llm(model_name, cache_dir="llm_weights"):
     model = AutoModelForCausalLM.from_pretrained(
         model_name, 
         torch_dtype=torch.bfloat16, 
-        cache_dir=cache_dir, 
-        low_cpu_mem_usage=True, 
+        # cache_dir=cache_dir, 
         device_map="auto",
         trust_remote_code=True,
     )
@@ -43,6 +43,12 @@ def main():
     parser.add_argument("--eval_zero_shot", action="store_true")
     args = parser.parse_args()
 
+    # Normalize path-like arguments to avoid dynamic-module cache collisions.
+    if args.model is not None:
+        args.model = args.model.rstrip("/")
+    if args.save_model is not None:
+        args.save_model = args.save_model.rstrip("/")
+
     # Setting seeds for reproducibility
     np.random.seed(args.seed)
     torch.random.manual_seed(args.seed)
@@ -56,6 +62,7 @@ def main():
     model_name = args.model.split("/")[-1]
     print(f"loading llm model {args.model}")
     model = get_llm(args.model, args.cache_dir)
+    print(model)
     model.eval()
     tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=False,trust_remote_code=True,)
 
@@ -82,15 +89,20 @@ def main():
     ppl_test = eval_ppl(args, model, tokenizer, device)
     print(f"wikitext perplexity {ppl_test}")
 
-    if not os.path.exists(args.save):
-        os.makedirs(args.save)
-    save_filepath = os.path.join(args.save, f"log_{args.prune_method}.txt")
-    with open(save_filepath, "w") as f:
-        print("method\tactual_sparsity\tppl_test", file=f, flush=True)
-        print(f"{args.prune_method}\t{sparsity_ratio:.4f}\t{ppl_test:.4f}", file=f, flush=True)
+    if args.save:
+        if not os.path.exists(args.save):
+            os.makedirs(args.save)
+        save_filepath = os.path.join(args.save, f"log_{args.prune_method}.txt")
+        with open(save_filepath, "w") as f:
+            print("method\tactual_sparsity\tppl_test", file=f, flush=True)
+            print(f"{args.prune_method}\t{sparsity_ratio:.4f}\t{ppl_test:.4f}", file=f, flush=True)
 
 
     if args.save_model:
+        module_name = model.__class__.__module__
+        module_file = sys.modules[module_name].__file__ if module_name in sys.modules else "<unknown>"
+        print(f"save source module: {module_name}")
+        print(f"save source file: {module_file}")
         model.save_pretrained(args.save_model)
         tokenizer.save_pretrained(args.save_model)
 
