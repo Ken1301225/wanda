@@ -4,11 +4,11 @@
 model="/data1/ldk/model/Qwen1.5/models--Qwen--Qwen1.5-MoE-A2.7B/snapshots/1a758c50ecb6350748b9ce0a99d2352fd9fc11c9/"
 sparsity_ratio=0.75
 cuda_device=2
-seed=42
+seed=0
 
 # Set CUDA device visibility
-export CUDA_HOME=/data1/ldk/env/dkllm
-export PATH=$CUDA_HOME/bin:$PATH
+# export CUDA_HOME=/data1/ldk/env/dkllm
+# export PATH=$CUDA_HOME/bin:$PATH
 export CUDA_VISIBLE_DEVICES=$cuda_device
 export HF_DATASETS_CACHE="/data1/ldk/huggingface/datasets"
 export HF_HUB_CACHE="/data1/ldk/huggingface/hub"

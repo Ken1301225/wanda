@@ -14,6 +14,12 @@ print('transformers', version('transformers'))
 print('accelerate', version('accelerate'))
 print('# of gpus: ', torch.cuda.device_count())
 
+def disable_deepspeed_probe_for_save():
+    try:
+        import accelerate.utils.other as accel_other
+        accel_other.is_deepspeed_available = lambda: False
+    except Exception:
+        pass
 def get_llm(model_name, cache_dir="llm_weights"):
     model = AutoModelForCausalLM.from_pretrained(
         model_name, 
@@ -22,7 +28,7 @@ def get_llm(model_name, cache_dir="llm_weights"):
         device_map="auto",
         trust_remote_code=True,
     )
-    model.seqlen = 8192 
+    model.seqlen = 1024 
     # model.seqlen = model.config.max_position_embeddings 
     return model
 
@@ -86,8 +92,8 @@ def main():
     print(f"sparsity sanity check {sparsity_ratio:.4f}")
     print("*"*30)
     ################################################################
-    ppl_test = eval_ppl(args, model, tokenizer, device)
-    print(f"wikitext perplexity {ppl_test}")
+    # ppl_test = eval_ppl(args, model, tokenizer, device)
+    # print(f"wikitext perplexity {ppl_test}")
 
     if args.save:
         if not os.path.exists(args.save):
@@ -95,7 +101,7 @@ def main():
         save_filepath = os.path.join(args.save, f"log_{args.prune_method}.txt")
         with open(save_filepath, "w") as f:
             print("method\tactual_sparsity\tppl_test", file=f, flush=True)
-            print(f"{args.prune_method}\t{sparsity_ratio:.4f}\t{ppl_test:.4f}", file=f, flush=True)
+            print(f"{args.prune_method}\t{sparsity_ratio:.4f}", file=f, flush=True) #\t{ppl_test:.4f}"
 
 
     if args.save_model:
@@ -103,6 +109,7 @@ def main():
         module_file = sys.modules[module_name].__file__ if module_name in sys.modules else "<unknown>"
         print(f"save source module: {module_name}")
         print(f"save source file: {module_file}")
+        disable_deepspeed_probe_for_save()
         model.save_pretrained(args.save_model)
         tokenizer.save_pretrained(args.save_model)
 
