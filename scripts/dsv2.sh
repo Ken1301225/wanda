@@ -3,8 +3,8 @@
 # Set common variables
 # Keep paths without trailing '/' to avoid dynamic-module cache key collisions.
 model="/data1/ldk/huggingface/hub/models--deepseek-ai--DeepSeek-V2-Lite/snapshots/604d5664dddd88a0433dbae533b7fe9472482de0"
-sparsity_ratio=0.75
-cuda_device=3
+sparsity_ratio=0.75 #0.75
+cuda_device=1
 seed=0
 
 # Set CUDA device visibility
@@ -31,9 +31,9 @@ run_python_command () {
 
 
 echo "Running with wanda pruning method"
-# run_python_command "ablate_wanda_seq" "unstructured" "/data1/ldk/SPNN/deepseekv2/wanda/output10" "/data1/ldk/SPNN/deepseekv2/wanda/ckpt10"
+run_python_command "ablate_wanda_seq" "unstructured" "/data1/ldk/SPNN/deepseekv2/wanda/output12" "/data1/ldk/SPNN/deepseekv2/wanda/ckpt12" #10
 # run_python_command "wanda" "unstructured" "/data1/ldk/SPNN/deepseekv2/wanda/output11" "/data1/ldk/SPNN/deepseekv2/wanda/ckpt11"
-run_python_command "sparsegpt" "unstructured" "/data1/ldk/SPNN/deepseekv2/wanda/sparsegpt/output8" "/data1/ldk/SPNN/deepseekv2/wanda/sparsegpt/ckpt8"
+# run_python_command "sparsegpt" "unstructured" "/data1/ldk/SPNN/deepseekv2/wanda/sparsegpt/output8" "/data1/ldk/SPNN/deepseekv2/wanda/sparsegpt/ckpt8"
 # run_python_command "wanda" "unstructured" "/data1/ldk/SPNN/deepseekv2/wanda/output6" "/data1/ldk/SPNN/deepseekv2/wanda/ckpt6"
 # run_python_command "wanda" "unstructured" 
 echo "Finished wanda pruning method"
