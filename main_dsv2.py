@@ -92,8 +92,8 @@ def main():
     print(f"sparsity sanity check {sparsity_ratio:.4f}")
     print("*"*30)
     ################################################################
-    # ppl_test = eval_ppl(args, model, tokenizer, device)
-    # print(f"wikitext perplexity {ppl_test}")
+    ppl_test = eval_ppl(args, model, tokenizer, device)
+    print(f"wikitext perplexity {ppl_test}")
 
     if args.save:
         if not os.path.exists(args.save):
@@ -101,7 +101,7 @@ def main():
         save_filepath = os.path.join(args.save, f"log_{args.prune_method}.txt")
         with open(save_filepath, "w") as f:
             print("method\tactual_sparsity\tppl_test", file=f, flush=True)
-            print(f"{args.prune_method}\t{sparsity_ratio:.4f}", file=f, flush=True) #\t{ppl_test:.4f}"
+            print(f"{args.prune_method}\t{sparsity_ratio:.4f}\t{ppl_test:.4f}", file=f, flush=True) #\t{ppl_test:.4f}"
 
 
     if args.save_model:

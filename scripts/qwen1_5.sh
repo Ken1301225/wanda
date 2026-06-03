@@ -2,8 +2,8 @@
 
 # Set common variables
 model="/data1/ldk/model/Qwen1.5/models--Qwen--Qwen1.5-MoE-A2.7B/snapshots/1a758c50ecb6350748b9ce0a99d2352fd9fc11c9/"
-sparsity_ratio=0.6
-cuda_device=0
+sparsity_ratio=0.5
+cuda_device=3
 seed=0
 timestamp=$(date +"%Y%m%d_%H%M%S")
 
@@ -31,7 +31,8 @@ run_python_command () {
 
 
 echo "Running with wanda pruning method"
-run_python_command "wanda" "unstructured" "/data1/ldk/SPNN/qwen1_5/wanda/output_s06_${timestamp}/" "/data1/ldk/SPNN/qwen1_5/wanda/ckpt_s06_${timestamp}/"
+# run_python_command "wanda" "unstructured" "/data1/ldk/SPNN/qwen1_5/wanda/output_s04_${timestamp}/" "/data1/ldk/SPNN/qwen1_5/wanda/ckpt_s04_${timestamp}/"
+run_python_command "wanda" "2:4" "/data1/ldk/SPNN/qwen1_5/wanda/output_24_${timestamp}/" "/data1/ldk/SPNN/qwen1_5/wanda/ckpt_24_${timestamp}/"
 # run_python_command "sparsegpt" "unstructured" "/data1/ldk/SPNN/qwen1_5/wanda/output9/" "/data1/ldk/SPNN/qwen1_5/wanda/ckpt9/"
 # run_python_command "ablate_wanda_seq" "unstructured" "/data1/ldk/SPNN/qwen1_5/wanda/output10/" "/data1/ldk/SPNN/qwen1_5/wanda/ckpt10/"
 # run_python_command "wanda" "unstructured" 
